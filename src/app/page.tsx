@@ -1,28 +1,28 @@
 "use client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/trpc/client";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
   const [value, setValue] = useState("");
 
   const trpc = useTRPC();
+  const router = useRouter();
 
-  const createMessage = useMutation(
-    trpc.messages.create.mutationOptions({
-      onSuccess: () => {
-        toast.success("Message Created");
+  const createProject = useMutation(
+    trpc.projects.create.mutationOptions({
+      onSuccess: (data) => {
+        router.push(`/api/projects/${data.id}`);
       },
       onError: (err) => {
         toast.error(err.message || "Something went wrong");
       },
     })
   );
-
-  const { data: messages } = useQuery(trpc.messages.getMany.queryOptions());
 
   return (
     <div className="p-4 space-y-4">
@@ -32,12 +32,11 @@ const Page = () => {
         placeholder="Enter text"
       />
       <Button
-        onClick={() => createMessage.mutate({ value: value })}
-        disabled={createMessage.isPending}
+        onClick={() => createProject.mutate({ value: value })}
+        disabled={createProject.isPending}
       >
-        {createMessage.isPending ? "Invoking..." : "Invoke"}
+        {createProject.isPending ? "Invoking..." : "Invoke"}
       </Button>
-      {JSON.stringify(messages, null, 2)}
     </div>
   );
 };

@@ -170,6 +170,7 @@ export const codeWriterFunction = inngest.createFunction(
       if (isError) {
         return await prisma.message.create({
           data: {
+            projectId: event.data.projectId,
             content: "Something went wrong!",
             type: "ERROR",
             role: "ASSISTANT",
@@ -178,6 +179,7 @@ export const codeWriterFunction = inngest.createFunction(
       }
       return await prisma.message.create({
         data: {
+          projectId: event.data.projectId,
           content: result.state.data.summary,
           type: "RESULT",
           role: "ASSISTANT",
