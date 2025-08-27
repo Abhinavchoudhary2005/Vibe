@@ -1,5 +1,5 @@
 "use client";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -11,16 +11,18 @@ const Page = () => {
 
   const trpc = useTRPC();
 
-  const invoke = useMutation(
-    trpc.invoke.mutationOptions({
+  const createMessage = useMutation(
+    trpc.messages.create.mutationOptions({
       onSuccess: () => {
-        toast.success("Background job started");
+        toast.success("Message Created");
       },
       onError: (err) => {
         toast.error(err.message || "Something went wrong");
       },
     })
   );
+
+  const { data: messages } = useQuery(trpc.messages.getMany.queryOptions());
 
   return (
     <div className="p-4 space-y-4">
@@ -30,11 +32,12 @@ const Page = () => {
         placeholder="Enter text"
       />
       <Button
-        onClick={() => invoke.mutate({ value: value })}
-        disabled={invoke.isPending}
+        onClick={() => createMessage.mutate({ value: value })}
+        disabled={createMessage.isPending}
       >
-        {invoke.isPending ? "Invoking..." : "Invoke"}
+        {createMessage.isPending ? "Invoking..." : "Invoke"}
       </Button>
+      {JSON.stringify(messages, null, 2)}
     </div>
   );
 };

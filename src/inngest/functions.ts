@@ -7,19 +7,27 @@ import {
 } from "@inngest/agent-kit";
 import { Sandbox } from "@e2b/code-interpreter";
 import { getSandbox, lastAssistantTextMessageContent } from "./utils";
-import z from "zod";
+import { z } from "zod";
 import { PROMPT } from "./prompt";
+import { PrismaClient } from "@/generated/prisma";
 
-export const helloWorld = inngest.createFunction(
-  { id: "hello-world" },
-  { event: "test/hello.world" },
+const prisma = new PrismaClient();
+
+interface AgentState {
+  summary: string;
+  files: { [path: string]: string };
+}
+
+export const codeWriterFunction = inngest.createFunction(
+  { id: "codeWriterAgent" },
+  { event: "test/codeWriterAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("vibe-nextjs-v1");
       return sandbox.sandboxId;
     });
 
-    const codeWriterAgent = createAgent({
+    const codeWriterAgent = createAgent<AgentState>({
       name: "Code writer",
       system: PROMPT,
       model: gemini({ model: "gemini-2.5-pro" }),
@@ -129,7 +137,7 @@ export const helloWorld = inngest.createFunction(
       },
     });
 
-    const network = createNetwork({
+    const network = createNetwork<AgentState>({
       name: "Code writer",
       agents: [codeWriterAgent],
       maxIter: 15,
@@ -152,6 +160,36 @@ export const helloWorld = inngest.createFunction(
       const host = sandbox.getHost(3000);
 
       return `https://${host}`;
+    });
+
+    const isError =
+      !result.state.data.summary ||
+      Object.keys(result.state.data.files || {}).length == 0;
+
+    await step.run("save-result", async () => {
+      if (isError) {
+        return await prisma.message.create({
+          data: {
+            content: "Something went wrong!",
+            type: "ERROR",
+            role: "ASSISTANT",
+          },
+        });
+      }
+      return await prisma.message.create({
+        data: {
+          content: result.state.data.summary,
+          type: "RESULT",
+          role: "ASSISTANT",
+          fragment: {
+            create: {
+              sandboxUrl: sandboxUrl,
+              title: "Fragment",
+              files: result.state.data.files,
+            },
+          },
+        },
+      });
     });
 
     return {
