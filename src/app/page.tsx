@@ -16,7 +16,7 @@ const Page = () => {
   const createProject = useMutation(
     trpc.projects.create.mutationOptions({
       onSuccess: (data) => {
-        router.push(`/api/projects/${data.id}`);
+        router.push(`/projects/${data.id}`);
       },
       onError: (err) => {
         toast.error(err.message || "Something went wrong");
