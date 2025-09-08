@@ -9,15 +9,11 @@ import { MessagesContainer } from "../components/messages-container";
 import { Suspense, useState } from "react";
 import { Fragment } from "@/generated/prisma";
 import { ProjectHeader } from "../components/project-header";
+import { FragmentWeb } from "../components/fragment-web";
 
 interface Props {
   projectId: string;
 }
-// const trpc = useTRPC();
-
-// const { data: project } = useSuspenseQuery(
-//   trpc.projects.getOne.queryOptions({ id: projectId })
-// );
 
 export const ProjectView = ({ projectId }: Props) => {
   const [activeFragment, setActiveFragment] = useState<Fragment | null>(null);
@@ -41,7 +37,9 @@ export const ProjectView = ({ projectId }: Props) => {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={65} minSize={50}>
-          <div className="flex flex-col h-full">TODO: Preview</div>
+          <div className="flex flex-col h-full">
+            {!!activeFragment && <FragmentWeb data={activeFragment} />}
+          </div>
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>

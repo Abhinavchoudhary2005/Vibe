@@ -23,7 +23,9 @@ export const codeWriterFunction = inngest.createFunction(
   { event: "test/codeWriterAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
-      const sandbox = await Sandbox.create("vibe-nextjs-v1");
+      const sandbox = await Sandbox.create("vibe-nextjs-v1", {
+        timeoutMs: 900000, // 15 minutes
+      });
       return sandbox.sandboxId;
     });
 
