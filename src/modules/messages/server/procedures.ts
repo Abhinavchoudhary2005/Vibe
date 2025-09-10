@@ -32,7 +32,7 @@ export const messagesRouter = createTRPCRouter({
         value: z
           .string()
           .min(1, { message: "prompt is required" })
-          .max(1000, { message: "prompt is too long" }),
+          .max(10000, { message: "prompt is too long" }),
         projectId: z.string().min(1, { message: "projectId is required" }),
       })
     )
