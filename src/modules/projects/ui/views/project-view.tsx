@@ -19,6 +19,8 @@ import Link from "next/link";
 import { FileExplorer } from "@/components/file-explorer";
 import { UserControl } from "@/components/user-control";
 import { useAuth } from "@clerk/nextjs";
+import { ErrorBoundary } from "react-error-boundary";
+import { FallbackUI } from "@/components/fallBack-ui";
 
 interface Props {
   projectId: string;
@@ -36,16 +38,21 @@ export const ProjectView = ({ projectId }: Props) => {
       <ResizablePanelGroup direction="horizontal">
         <ResizablePanel defaultSize={35} minSize={20}>
           <div className="flex flex-col h-full">
-            <Suspense fallback={<p>Loading Project...</p>}>
-              <ProjectHeader projectId={projectId} />
-            </Suspense>
-            <Suspense fallback={<p>Loading Messages...</p>}>
-              <MessagesContainer
-                projectId={projectId}
-                activeFragment={activeFragment}
-                setActiveFragment={setActiveFragment}
-              />
-            </Suspense>
+            <ErrorBoundary fallback={<FallbackUI type="project" isError />}>
+              <Suspense fallback={<FallbackUI type="project" />}>
+                <ProjectHeader projectId={projectId} />
+              </Suspense>
+            </ErrorBoundary>
+
+            <ErrorBoundary fallback={<FallbackUI type="messages" isError />}>
+              <Suspense fallback={<FallbackUI type="messages" />}>
+                <MessagesContainer
+                  projectId={projectId}
+                  activeFragment={activeFragment}
+                  setActiveFragment={setActiveFragment}
+                />
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </ResizablePanel>
         <ResizableHandle className="hover:bg-primary transition-colors" />

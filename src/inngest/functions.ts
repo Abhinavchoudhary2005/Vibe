@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "./prompt";
 import { PrismaClient } from "@/generated/prisma";
+import { SANDBOX_TIMEOUT_MS } from "./type";
 
 const prisma = new PrismaClient();
 
@@ -30,7 +31,7 @@ export const codeWriterFunction = inngest.createFunction(
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("vibe-nextjs-v1", {
-        timeoutMs: 900000, // 15 minutes
+        timeoutMs: SANDBOX_TIMEOUT_MS,
       });
       return sandbox.sandboxId;
     });
@@ -42,7 +43,8 @@ export const codeWriterFunction = inngest.createFunction(
       async () => {
         const messages = await prisma.message.findMany({
           where: { projectId: event.data.projectId },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
+          take: 7,
         });
 
         for (const message of messages) {
@@ -52,7 +54,7 @@ export const codeWriterFunction = inngest.createFunction(
             content: message.content,
           });
         }
-        return formattedMessages;
+        return formattedMessages.reverse();
       }
     );
 
@@ -69,7 +71,7 @@ export const codeWriterFunction = inngest.createFunction(
     const codeWriterAgent = createAgent<AgentState>({
       name: "Code writer",
       system: PROMPT,
-      model: gemini({ model: "gemini-2.5-pro" }),
+      model: gemini({ model: "gemini-2.5-flash" }),
       tools: [
         createTool({
           name: "terminal",
