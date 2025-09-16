@@ -40,7 +40,7 @@ export function Usage({ points, msBeforeNext }: Props) {
           </p>
         </div>
         {!hasProAccess && (
-          <Button asChild size="sm" className="ml-auto">
+          <Button asChild size="sm" className="ml-auto" variant="tertiary">
             <Link href="/pricing">
               <CrownIcon /> Upgrade
             </Link>
