@@ -26,7 +26,20 @@ interface AgentState {
 }
 
 export const codeWriterFunction = inngest.createFunction(
-  { id: "codeWriterAgent" },
+  {
+    id: "codeWriterAgent",
+    name: "Code Writer Agent",
+    onFailure: async ({ event, error }) => {
+      await prisma.message.create({
+        data: {
+          projectId: event.data.event.data.projectId,
+          content: `Agent failed after retries!`,
+          type: "ERROR",
+          role: "ASSISTANT",
+        },
+      });
+    },
+  },
   { event: "test/codeWriterAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {

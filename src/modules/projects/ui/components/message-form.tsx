@@ -65,9 +65,17 @@ export const MessageForm = ({ projectId }: Props) => {
     });
   };
 
-  const [isFocused, setIsFocused] = useState(false);
+  const { data: messages } = useQuery(
+    trpc.messages.getMany.queryOptions({ projectId })
+  );
+
+  const lastMessage = messages?.[messages.length - 1];
+  const isLastAssistant = lastMessage?.role === "ASSISTANT";
+
   const isPending = createMessage.isPending;
-  const isButtonDisabled = isPending || !form.formState.isValid;
+  const isButtonDisabled =
+    isPending || !form.formState.isValid || !isLastAssistant;
+  const [isFocused, setIsFocused] = useState(false);
   const showUsage = !!usage;
 
   return (
@@ -101,10 +109,12 @@ export const MessageForm = ({ projectId }: Props) => {
               placeholder="What would you like to build?"
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
+                  if (isButtonDisabled) return;
                   if (e.shiftKey) {
                     // allow new line
                     return;
                   }
+
                   if (e.ctrlKey || e.metaKey) {
                     e.preventDefault();
                     form.handleSubmit(onSubmit)(e);
