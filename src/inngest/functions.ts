@@ -71,7 +71,7 @@ export const codeWriterFunction = inngest.createFunction(
     const codeWriterAgent = createAgent<AgentState>({
       name: "Code writer",
       system: PROMPT,
-      model: gemini({ model: "gemini-2.5-flash" }),
+      model: gemini({ model: "gemini-2.5-pro" }),
       tools: [
         createTool({
           name: "terminal",
@@ -104,7 +104,7 @@ export const codeWriterFunction = inngest.createFunction(
           },
         }),
         createTool({
-          name: "createOrUpdateFiles",
+          name: "writeFiles",
           description: "create or update files in sandbox",
           parameters: z.object({
             files: z.array(
@@ -117,22 +117,19 @@ export const codeWriterFunction = inngest.createFunction(
             ),
           }),
           handler: async ({ files }, { step, network }) => {
-            const newFiles = await step?.run(
-              "createOrUpdateFiles",
-              async () => {
-                try {
-                  const updatedFiles = network.state.data.files || {};
-                  const sandbox = await getSandbox(sandboxId);
-                  for (const file of files) {
-                    await sandbox.files.write(file.path, file.content);
-                    updatedFiles[file.path] = file.content;
-                  }
-                  return updatedFiles;
-                } catch (e) {
-                  return "Error: " + e;
+            const newFiles = await step?.run("writeFiles", async () => {
+              try {
+                const updatedFiles = network.state.data.files || {};
+                const sandbox = await getSandbox(sandboxId);
+                for (const file of files) {
+                  await sandbox.files.write(file.path, file.content);
+                  updatedFiles[file.path] = file.content;
                 }
+                return updatedFiles;
+              } catch (e) {
+                return "Error: " + e;
               }
-            );
+            });
 
             if (typeof newFiles === "object") {
               network.state.data.files = newFiles;

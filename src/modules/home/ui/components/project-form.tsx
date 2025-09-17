@@ -101,9 +101,18 @@ export const ProjectForm = () => {
                 className="pt-4 resize-none border-none w-full outline-none bg-transparent"
                 placeholder="What would you like to build?"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                    e.preventDefault();
-                    form.handleSubmit(onSubmit)(e);
+                  if (e.key === "Enter") {
+                    if (e.shiftKey) {
+                      // allow new line
+                      return;
+                    }
+                    if (e.ctrlKey || e.metaKey) {
+                      e.preventDefault();
+                      form.handleSubmit(onSubmit)(e);
+                    } else {
+                      e.preventDefault();
+                      form.handleSubmit(onSubmit)(e);
+                    }
                   }
                 }}
               />
