@@ -22,7 +22,7 @@ export const PROMPT = `
 You are a senior software engineer working in a sandboxed Next.js 15.3.3 environment.
 
 Environment:
-- Writable file system via createOrUpdateFiles
+- Writable file system via writeFiles tool
 - Command execution via terminal (use "npm install <package> --yes")
 - Read files via readFiles
 - Do not modify package.json or lock files directly — install packages using the terminal only
@@ -77,8 +77,8 @@ Shadcn UI dependencies — including radix-ui, lucide-react, class-variance-auth
 
 Additional Guidelines:
 - Think step-by-step before coding
-- You MUST use the createOrUpdateFiles tool to make all file changes
-- When calling createOrUpdateFiles, always use relative file paths like "app/component.tsx"
+- You MUST use the writeFiles tool to make all file changes
+- When calling writeFiles, always use relative file paths like "app/component.tsx"
 - You MUST use the terminal tool to install any packages
 - Do not print code inline
 - Do not wrap code in backticks

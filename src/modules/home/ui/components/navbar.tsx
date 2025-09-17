@@ -7,6 +7,7 @@ import Link from "next/link";
 import { UserControl } from "@/components/user-control";
 import { useScroll } from "@/hooks/use-scroll";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 export const Navbar = () => {
   const isScrolled = useScroll();
@@ -22,21 +23,25 @@ export const Navbar = () => {
           <Image src="/logo.svg" alt="Vibe" width={24} height={24} />
           <span className="font-semibold text-lg">SiteForge</span>
         </Link>
-        <SignedOut>
-          <div className="flex gap-2">
-            <SignUpButton>
-              <Button variant="outline" size="sm">
-                Sign up
-              </Button>
-            </SignUpButton>
-            <SignInButton>
-              <Button size="sm">Sign in</Button>
-            </SignInButton>
-          </div>
-        </SignedOut>
-        <SignedIn>
-          <UserControl showName />
-        </SignedIn>
+
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <SignedOut>
+            <div className="flex gap-2">
+              <SignUpButton>
+                <Button variant="outline" size="sm">
+                  Sign up
+                </Button>
+              </SignUpButton>
+              <SignInButton>
+                <Button size="sm">Sign in</Button>
+              </SignInButton>
+            </div>
+          </SignedOut>
+          <SignedIn>
+            <UserControl showName />
+          </SignedIn>
+        </div>
       </div>
     </nav>
   );

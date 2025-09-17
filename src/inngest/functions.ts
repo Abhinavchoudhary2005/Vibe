@@ -16,6 +16,7 @@ import {
 import { z } from "zod";
 import { FRAGMENT_TITLE_PROMPT, PROMPT, RESPONSE_PROMPT } from "./prompt";
 import { PrismaClient } from "@/generated/prisma";
+import { SANDBOX_TIMEOUT_MS } from "./type";
 
 const prisma = new PrismaClient();
 
@@ -25,12 +26,25 @@ interface AgentState {
 }
 
 export const codeWriterFunction = inngest.createFunction(
-  { id: "codeWriterAgent" },
+  {
+    id: "codeWriterAgent",
+    name: "Code Writer Agent",
+    onFailure: async ({ event, error }) => {
+      await prisma.message.create({
+        data: {
+          projectId: event.data.event.data.projectId,
+          content: `Agent failed after retries!`,
+          type: "ERROR",
+          role: "ASSISTANT",
+        },
+      });
+    },
+  },
   { event: "test/codeWriterAgent" },
   async ({ event, step }) => {
     const sandboxId = await step.run("get-sandbox-id", async () => {
       const sandbox = await Sandbox.create("vibe-nextjs-v1", {
-        timeoutMs: 900000, // 15 minutes
+        timeoutMs: SANDBOX_TIMEOUT_MS,
       });
       return sandbox.sandboxId;
     });
@@ -42,7 +56,8 @@ export const codeWriterFunction = inngest.createFunction(
       async () => {
         const messages = await prisma.message.findMany({
           where: { projectId: event.data.projectId },
-          orderBy: { createdAt: "asc" },
+          orderBy: { createdAt: "desc" },
+          take: 7,
         });
 
         for (const message of messages) {
@@ -52,7 +67,7 @@ export const codeWriterFunction = inngest.createFunction(
             content: message.content,
           });
         }
-        return formattedMessages;
+        return formattedMessages.reverse();
       }
     );
 
@@ -102,7 +117,7 @@ export const codeWriterFunction = inngest.createFunction(
           },
         }),
         createTool({
-          name: "createOrUpdateFiles",
+          name: "writeFiles",
           description: "create or update files in sandbox",
           parameters: z.object({
             files: z.array(
@@ -115,22 +130,19 @@ export const codeWriterFunction = inngest.createFunction(
             ),
           }),
           handler: async ({ files }, { step, network }) => {
-            const newFiles = await step?.run(
-              "createOrUpdateFiles",
-              async () => {
-                try {
-                  const updatedFiles = network.state.data.files || {};
-                  const sandbox = await getSandbox(sandboxId);
-                  for (const file of files) {
-                    await sandbox.files.write(file.path, file.content);
-                    updatedFiles[file.path] = file.content;
-                  }
-                  return updatedFiles;
-                } catch (e) {
-                  return "Error: " + e;
+            const newFiles = await step?.run("writeFiles", async () => {
+              try {
+                const updatedFiles = network.state.data.files || {};
+                const sandbox = await getSandbox(sandboxId);
+                for (const file of files) {
+                  await sandbox.files.write(file.path, file.content);
+                  updatedFiles[file.path] = file.content;
                 }
+                return updatedFiles;
+              } catch (e) {
+                return "Error: " + e;
               }
-            );
+            });
 
             if (typeof newFiles === "object") {
               network.state.data.files = newFiles;
